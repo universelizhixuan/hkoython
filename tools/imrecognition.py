@@ -12,6 +12,7 @@ class ImRecognition():
         self.root_path = root_path
         self.ptz = ptz
         self.display_q = Queue()
+        self.color_tuple = tuple()
 
     def recognition(self):
         if self.ptz:
@@ -45,16 +46,21 @@ class ImRecognition():
                         h = int(item["location"]["height"])
                         x2 = x1 + w
                         y2 = y1 + h
-
-                        cv2.rectangle(ori_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
-                                    (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
+                        if item["name"] == 'torque_OK':
+                            self.color_tuple = (0, 255, 0)
+                        else:
+                            self.color_tuple = (255, 0, 0)
+                        if float(item["score"]) > 0.8:
+                            cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
+                            cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
+                                        (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
                     ori_img = ori_img.astype(np.uint8)
                     cv2.imwrite(new_filepath, ori_img)
 
                     self.display_q.put(new_filepath)
                 else:
-                    self.display_q.put(filepath)
+                    cv2.imwrite(new_filepath, ori_img)
+                    self.display_q.put(new_filepath)
         else:
             while True:
                 filepath = self.hktool.snapshot_normal_q.get()
@@ -87,13 +93,18 @@ class ImRecognition():
                         h = int(item["location"]["height"])
                         x2 = x1 + w
                         y2 = y1 + h
-
-                        cv2.rectangle(ori_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
-                                    (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
+                        if item["name"] == 'torque_OK':
+                            self.color_tuple = (0, 255, 0)
+                        else:
+                            self.color_tuple = (255, 0, 0)
+                        if float(item["score"])>0.8:
+                            cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
+                            cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
+                                        (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
                     ori_img = ori_img.astype(np.uint8)
                     cv2.imwrite(new_filepath, ori_img)
 
                     self.display_q.put(new_filepath)
                 else:
-                    self.display_q.put(filepath)
+                    cv2.imwrite(new_filepath, ori_img)
+                    self.display_q.put(new_filepath)
