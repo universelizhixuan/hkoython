@@ -34,29 +34,34 @@ class ImRecognition():
                     results = requests.post('http://127.0.0.2:24401/', params={'threshold': 0.8}, data=img).json()['results']
                 except Exception as e:
                     results = list()
-                    print('error occured:{}'.format(e))
+                    with open('D:\\error.txt','a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
                 print('耗时：{}'.format(datetime.datetime.now() - now))
-                if results:
-                    for item in results:
-                        # Draw bbox
-                        x1 = int(item["location"]["left"])
-                        y1 = int(item["location"]["top"])
-                        w = int(item["location"]["width"])
-                        h = int(item["location"]["height"])
-                        x2 = x1 + w
-                        y2 = y1 + h
-                        if item["name"] == 'torque_OK':
-                            self.color_tuple = (0, 255, 0)
-                        else:
-                            self.color_tuple = (0, 0, 255)
-                        if float(item["score"]) > 0.8:
-                            cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
-                            cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
-                                        (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
-                    ori_img = ori_img.astype(np.uint8)
+                try:
+                    if results:
+                        for item in results:
+                            # Draw bbox
+                            x1 = int(item["location"]["left"])
+                            y1 = int(item["location"]["top"])
+                            w = int(item["location"]["width"])
+                            h = int(item["location"]["height"])
+                            x2 = x1 + w
+                            y2 = y1 + h
+                            if item["name"] == 'torque_OK':
+                                self.color_tuple = (0, 255, 0)
+                            else:
+                                self.color_tuple = (0, 0, 255)
+                            if float(item["score"]) > 0.8:
+                                cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
+                                cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
+                                            (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
+                        ori_img = ori_img.astype(np.uint8)
 
-                cv2.imwrite(new_filepath, ori_img)
-                self.display_q.put(new_filepath)
+                    cv2.imwrite(new_filepath, ori_img)
+                    self.display_q.put(new_filepath)
+                except Exception as e:
+                    with open('D:\\error.txt','a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
         else:
             while True:
                 filepath = self.hktool.snapshot_normal_q.get()
@@ -77,26 +82,31 @@ class ImRecognition():
                         'results']
                 except Exception as e:
                     results = list()
-                    print('error occured:{}'.format(e))
+                    with open('D:\\error.txt','a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
                 print('耗时：{}'.format(datetime.datetime.now() - now))
-                if results:
-                    for item in results:
-                        # Draw bbox
-                        x1 = int(item["location"]["left"])
-                        y1 = int(item["location"]["top"])
-                        w = int(item["location"]["width"])
-                        h = int(item["location"]["height"])
-                        x2 = x1 + w
-                        y2 = y1 + h
-                        if item["name"] == 'torque_OK':
-                            self.color_tuple = (0, 255, 0)
-                        else:
-                            self.color_tuple = (0, 0, 255)
-                        if float(item["score"])>0.8:
-                            cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
-                            cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
-                                        (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
-                    ori_img = ori_img.astype(np.uint8)
+                try:
+                    if results:
+                        for item in results:
+                            # Draw bbox
+                            x1 = int(item["location"]["left"])
+                            y1 = int(item["location"]["top"])
+                            w = int(item["location"]["width"])
+                            h = int(item["location"]["height"])
+                            x2 = x1 + w
+                            y2 = y1 + h
+                            if item["name"] == 'torque_OK':
+                                self.color_tuple = (0, 255, 0)
+                            else:
+                                self.color_tuple = (0, 0, 255)
+                            if float(item["score"])>0.8:
+                                cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
+                                cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
+                                            (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
+                        ori_img = ori_img.astype(np.uint8)
 
-                cv2.imwrite(new_filepath, ori_img)
-                self.display_q.put(new_filepath)
+                    cv2.imwrite(new_filepath, ori_img)
+                    self.display_q.put(new_filepath)
+                except Exception as e:
+                    with open('D:\\error.txt','a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
