@@ -48,7 +48,7 @@ class ImRecognition():
                         if item["name"] == 'torque_OK':
                             self.color_tuple = (0, 255, 0)
                         else:
-                            self.color_tuple = (255, 0, 0)
+                            self.color_tuple = (0, 0, 255)
                         if float(item["score"]) > 0.8:
                             cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
                             cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
@@ -91,7 +91,7 @@ class ImRecognition():
                         if item["name"] == 'torque_OK':
                             self.color_tuple = (0, 255, 0)
                         else:
-                            self.color_tuple = (255, 0, 0)
+                            self.color_tuple = (0, 0, 255)
                         if float(item["score"])>0.8:
                             cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
                             cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),

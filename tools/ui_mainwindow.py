@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'untitled.ui'
+# Form implementation generated from reading ui file 'ui_mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.4
 #
@@ -9,21 +9,16 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QImage, QPixmap
-from queue import Queue
-from PyQt5.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsPixmapItem
-
 
 
 class Ui_MainWindow(object):
-
-    def setupUi(self, MainWindow:QMainWindow):
+    def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(2560, 1000)
+        MainWindow.resize(2560, 1035)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(340, 10, 198, 28))
+        self.label.setGeometry(QtCore.QRect(340, 40, 198, 28))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -39,7 +34,7 @@ class Ui_MainWindow(object):
         self.label.setFont(font)
         self.label.setObjectName("label")
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(1160, 10, 156, 28))
+        self.label_2.setGeometry(QtCore.QRect(1200, 40, 156, 28))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -55,7 +50,7 @@ class Ui_MainWindow(object):
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(1970, 10, 156, 28))
+        self.label_3.setGeometry(QtCore.QRect(2000, 40, 156, 28))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -71,7 +66,7 @@ class Ui_MainWindow(object):
         self.label_3.setFont(font)
         self.label_3.setObjectName("label_3")
         self.splitter = QtWidgets.QSplitter(self.centralwidget)
-        self.splitter.setGeometry(QtCore.QRect(60, 51, 2436, 454))
+        self.splitter.setGeometry(QtCore.QRect(60, 90, 2436, 454))
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
         self.graphicsView_1 = QtWidgets.QGraphicsView(self.splitter)
@@ -80,6 +75,23 @@ class Ui_MainWindow(object):
         self.graphicsView_2.setObjectName("graphicsView_2")
         self.graphicsView_3 = QtWidgets.QGraphicsView(self.splitter)
         self.graphicsView_3.setObjectName("graphicsView_3")
+        self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
+        self.groupBox.setGeometry(QtCore.QRect(30, 10, 2491, 551))
+        font = QtGui.QFont()
+        font.setFamily("微软雅黑")
+        font.setPointSize(12)
+        font.setBold(True)
+        font.setItalic(True)
+        font.setUnderline(False)
+        font.setWeight(75)
+        self.groupBox.setFont(font)
+        self.groupBox.setAutoFillBackground(False)
+        self.groupBox.setObjectName("groupBox")
+        self.groupBox.raise_()
+        self.label.raise_()
+        self.label_2.raise_()
+        self.label_3.raise_()
+        self.splitter.raise_()
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -130,10 +142,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
         self.menubar.addAction(self.menu_2.menuAction())
 
-
-
         self.retranslateUi(MainWindow)
-
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -142,6 +151,7 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "姿态监测(normal-1)"))
         self.label_2.setText(_translate("MainWindow", "安装监测(ptz-1)"))
         self.label_3.setText(_translate("MainWindow", "安装监测(ptz-2)"))
+        self.groupBox.setTitle(_translate("MainWindow", "GroupBox"))
         self.menu.setTitle(_translate("MainWindow", "文件"))
         self.menu_2.setTitle(_translate("MainWindow", "监控"))
         self.menunormal_1.setTitle(_translate("MainWindow", "normal-1"))
@@ -154,5 +164,3 @@ class Ui_MainWindow(object):
         self.actionend_2.setText(_translate("MainWindow", "end"))
         self.actionbegin_3.setText(_translate("MainWindow", "begin/end"))
         self.actionend_3.setText(_translate("MainWindow", "end"))
-
-
