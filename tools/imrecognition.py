@@ -27,7 +27,6 @@ class ImRecognition():
                 new_filepath = '{}\\{}\\{}'.format(self.root_path, filepath.split('\\')[-2], filepath.split('\\')[-1])
 
                 ori_img = cv2.imread(filepath).astype(np.float32)
-                height, width = ori_img.shape[:2]
                 with open(filepath, 'rb') as f:
                     img = f.read()
                 now = datetime.datetime.now()
@@ -55,12 +54,9 @@ class ImRecognition():
                             cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
                                         (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
                     ori_img = ori_img.astype(np.uint8)
-                    cv2.imwrite(new_filepath, ori_img)
 
-                    self.display_q.put(new_filepath)
-                else:
-                    cv2.imwrite(new_filepath, ori_img)
-                    self.display_q.put(new_filepath)
+                cv2.imwrite(new_filepath, ori_img)
+                self.display_q.put(new_filepath)
         else:
             while True:
                 filepath = self.hktool.snapshot_normal_q.get()
@@ -73,7 +69,6 @@ class ImRecognition():
                 new_filepath = '{}\\{}\\{}'.format(self.root_path, filepath.split('\\')[-2], filepath.split('\\')[-1])
                 # TODO:目前先放原始照片，待算法完善后放处理后照片
                 ori_img = cv2.imread(filepath).astype(np.float32)
-                height, width = ori_img.shape[:2]
                 with open(filepath, 'rb') as f:
                     img = f.read()
                 now = datetime.datetime.now()
@@ -102,9 +97,6 @@ class ImRecognition():
                             cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
                                         (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
                     ori_img = ori_img.astype(np.uint8)
-                    cv2.imwrite(new_filepath, ori_img)
 
-                    self.display_q.put(new_filepath)
-                else:
-                    cv2.imwrite(new_filepath, ori_img)
-                    self.display_q.put(new_filepath)
+                cv2.imwrite(new_filepath, ori_img)
+                self.display_q.put(new_filepath)
