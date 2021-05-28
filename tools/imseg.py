@@ -7,6 +7,7 @@ import numpy as np
 from queue import Queue
 import datetime
 from threading import Event
+from PIL import Image
 
 # 处理图片，判断整车姿态是否有问题
 class ImSeg():
@@ -20,6 +21,8 @@ class ImSeg():
         self.errorpath_q = Queue()
         # 包络数组
         self.envelop_array = np.zeros(self.resolution,dtype='uint8',order='F')
+        # 是否开始采集轮廓
+        self.envelope_event = Event()
         # 是否在包络内
         self.flag = True
 
@@ -61,35 +64,45 @@ class ImSeg():
     def arr2txt(self,array,path):
         with open(path, 'w') as f:
             f.write(mask_util.encode(array)['counts'].decode('utf-8'))
+
     # txt到array转换，工具函数。path：txt存储路径
-    # TODO:梁兴杰
     def txt2array(self,path):
         with open(path,'r') as f:
             img = f.read()
         rle_obj = {"counts": img, "size": list(self.resolution)}
         return mask_util.decode(rle_obj)
 
+    # array到图片转换，工具函数。path：img存储路径
+    def array2img(self,array,path):
+        im = Image.new('RGB', (self.resolution[1], self.resolution[0]), 'white')
+        im.save('D:\\white.jpg')
+        ori_img = cv2.imread('D:\\white.jpg').astype(np.float32)
+        alpha = 1
+        color = np.array([0, 0, 255])
+        idx = np.nonzero(array)
+        ori_img[idx[0], idx[1], :] *= 1.0 - alpha
+        ori_img[idx[0], idx[1], :] += alpha * color
+        ori_img = ori_img.astype(np.uint8)
+        cv2.imwrite(path, ori_img)
 
-    # 生成轮廓函数。envelope_event由GUI传入，如isSet为True，开始采集并计算包络；如isSet为False，结束采集包络。默认为False
+    # 生成轮廓函数。self.envelope_event由GUI传入，如isSet为True，开始采集并计算包络；如isSet为False，结束采集包络。默认为False
     # TODO:GUI形式需要确定，核心要求两个标志互斥，且有保存界面。在GUI类里完成mask文件存储及调用
-    def gen_envelope(self,envelope_event:Event):
+    def gen_envelope(self):
         while True:
-            if envelope_event:
-                filepath = self.hktool.snapshot_normal_q.get()
-                mask = self.gen_mask(filepath)
-                os.remove(filepath)
+            self.envelope_event.wait()
+            filepath = self.hktool.snapshot_normal_q.get()
+            mask = self.gen_mask(filepath)
+            os.remove(filepath)
 
-                if mask == 'error':
-                    # TODO:处理
-                    pass
-                elif mask == 'no result':
-                    # TODO:处理
-                    pass
-                # 生成包络
-                else:
-                    self.envelop_array = self.envelop_array | mask
+            if mask == 'error':
+                # TODO:处理
+                pass
+            elif mask == 'no result':
+                # TODO:处理
+                pass
+            # 生成包络
             else:
-                break
+                self.envelop_array = self.envelop_array | mask
 
     # 生成轮廓线，工具函数
     def gen_outline(self,envelope_img_path,outline_array_path):

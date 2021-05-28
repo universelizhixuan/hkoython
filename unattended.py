@@ -30,12 +30,12 @@ t5 = Thread(target=hktool_ptz_1.snapshot_ptz, args=((4, 0), (1, 31), 'D:\\MTS\\p
 t6 = Thread(target=hktool_ptz_2.snapshot_ptz, args=((4, 0), (1, 31), 'D:\\MTS\\ptz-2',))
 
 # 识别驾驶室姿态
-t7 = Thread(target=im_seg.segmentation)
+t7 = Thread(target=im_seg.gen_envelope)
 t8 = Thread(target=imrec_ptz_1.recognition)
 t9 = Thread(target=imrec_ptz_2.recognition)
 
 # 产生可视化窗口
-t10 = Thread(target=gen_mainwindow,args=(mixed_q_dict,))
+t10 = Thread(target=gen_mainwindow,args=(mixed_q_dict,im_seg,'D:\\MTS\\mask'))
 
 
 t1.start()
