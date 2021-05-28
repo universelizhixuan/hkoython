@@ -12,13 +12,14 @@ from threading import Event
 class ImSeg():
     def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560)):
         self.hktool = hktool
+        self.resolution = resolution
         self.root_path = root_path
         # 需要显示的图片统一处理，直接传输图片信息，只有出现错误再保存
         self.display_q = Queue()
         # 错误图片路径存储
         self.errorpath_q = Queue()
         # 包络数组
-        self.envelop_array = np.zeros(resolution,dtype='uint8',order='F')
+        self.envelop_array = np.zeros(self.resolution,dtype='uint8',order='F')
         # 是否在包络内
         self.flag = True
 
@@ -63,8 +64,11 @@ class ImSeg():
     # txt到array转换，工具函数。path：txt存储路径
     # TODO:梁兴杰
     def txt2array(self,path):
-        array = path
-        return array
+        with open(path,'r') as f:
+            img = f.read()
+        rle_obj = {"counts": img, "size": list(self.resolution)}
+        return mask_util.decode(rle_obj)
+
 
     # 生成轮廓函数。envelope_event由GUI传入，如isSet为True，开始采集并计算包络；如isSet为False，结束采集包络。默认为False
     # TODO:GUI形式需要确定，核心要求两个标志互斥，且有保存界面。在GUI类里完成mask文件存储及调用
@@ -106,8 +110,9 @@ class ImSeg():
 
     # 功能：(1)队列取图片生成mask；(2)判断mask是否在包络内；(3)将判断结果生成当前mask+包络线的图片，直接放入display_q，作为显示用；(4)对于判断NG的，存储并将文件路径放入errorpath_q
     # filepath:envelop_array存储的txt文件,pixel_threshold为允许的像素差阈值
-    def judge_mask(self,envelop_array_path,pixel_threshold):
+    def judge_mask(self,envelop_array_path,outline_array_path,pixel_threshold):
         envelop_array = self.txt2array(envelop_array_path)
+        outline_array = self.txt2array(outline_array_path)
 
         while True:
             filepath = self.hktool.snapshot_normal_q.get()
@@ -145,8 +150,31 @@ class ImSeg():
                     array = np.subtract(envelop_array, mask)
                     if len(array[array == 255]) > pixel_threshold:
                         self.flag = False
+                    else:
+                        self.flag = True
+                    # 轮廓线和图片的mask合并
+                    array_add = np.add(outline_array,mask)
+                    # TODO：需要定义一个确定的颜色
+                    random_color = np.array(
+                        [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
+
+                    idx = np.nonzero(array_add)
+                    alpha = 0.5
+                    ori_img[idx[0], idx[1], :] *= 1.0 - alpha
+                    ori_img[idx[0], idx[1], :] += alpha * random_color
+
+                    ori_img = ori_img.astype(np.uint8)
+
 
                     self.display_q.put(new_filepath)
+                    if self.flag:
+                        cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
+                        cv2.imwrite(new_filepath, ori_img)
+                        os.remove(filepath)
+                    else:
+                        cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
+                        cv2.imwrite(new_filepath, ori_img)
+                        self.errorpath_q.put(new_filepath)
                 except Exception as e:
                     with open('D:\\error.txt', 'a+') as f:
                         f.write('{}:{}\n'.format(datetime.datetime.now(), e))
