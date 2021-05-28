@@ -23,6 +23,8 @@ class ImSeg():
         self.envelop_array = np.zeros(self.resolution,dtype='uint8',order='F')
         # 是否开始采集轮廓
         self.envelope_event = Event()
+        # 是否判断
+        self.judge_event = Event()
         # 是否在包络内
         self.flag = True
 
@@ -128,73 +130,76 @@ class ImSeg():
         outline_array = self.txt2array(outline_array_path)
 
         while True:
-            filepath = self.hktool.snapshot_normal_q.get()
-            # 建立存储处理完图像的文件夹
-            folder_path = '{}\\{}'.format(self.root_path, filepath.split('\\')[-2])
-            if not os.path.exists(folder_path):
-                print('mkdir {}'.format(folder_path))
-                os.mkdir(folder_path)
-            # 图像文件路径定位
-            new_filepath = '{}\\{}\\{}'.format(self.root_path, filepath.split('\\')[-2], filepath.split('\\')[-1])
+            if self.judge_event.isSet():
+                filepath = self.hktool.snapshot_normal_q.get()
+                # 建立存储处理完图像的文件夹
+                folder_path = '{}\\{}'.format(self.root_path, filepath.split('\\')[-2])
+                if not os.path.exists(folder_path):
+                    print('mkdir {}'.format(folder_path))
+                    os.mkdir(folder_path)
+                # 图像文件路径定位
+                new_filepath = '{}\\{}\\{}'.format(self.root_path, filepath.split('\\')[-2], filepath.split('\\')[-1])
 
-            ori_img = cv2.imread(filepath).astype(np.float32)
-            height, width = ori_img.shape[:2]
+                ori_img = cv2.imread(filepath).astype(np.float32)
+                height, width = ori_img.shape[:2]
 
-            with open(filepath, 'rb') as f:
-                img = f.read()
+                with open(filepath, 'rb') as f:
+                    img = f.read()
 
-            # TODO:实在太TM慢了，平均45秒！
-            now = datetime.datetime.now()
-            try:
-                result = requests.post('http://127.0.0.1:24401/', params={'threshold': 0.1}, data=img).json()['results']
-            except Exception as e:
-                result = list()
-                with open('D:\\error.txt', 'a+') as f:
-                    f.write('{}:{}\n'.format(datetime.datetime.now(), e))
-            print('耗时：{}'.format(datetime.datetime.now() - now))
-            # 有结果，能识别出来
-            if result:
+                # TODO:实在太TM慢了，平均45秒！
+                now = datetime.datetime.now()
                 try:
-                    # 轮廓识别标签只有一个
-                    img = result[0]['mask']
-                    rle_obj = {"counts": img, "size": [height, width]}
-                    mask = mask_util.decode(rle_obj)
-                    # 比较从文件读取包络和当前mask的区别
-                    array = np.subtract(envelop_array, mask)
-                    if len(array[array == 255]) > pixel_threshold:
-                        self.flag = False
-                    else:
-                        self.flag = True
-                    # 轮廓线和图片的mask合并
-                    array_add = np.add(outline_array,mask)
-                    # TODO：需要定义一个确定的颜色
-                    random_color = np.array(
-                        [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
-
-                    idx = np.nonzero(array_add)
-                    alpha = 0.5
-                    ori_img[idx[0], idx[1], :] *= 1.0 - alpha
-                    ori_img[idx[0], idx[1], :] += alpha * random_color
-
-                    ori_img = ori_img.astype(np.uint8)
-
-
-                    self.display_q.put(new_filepath)
-                    if self.flag:
-                        cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
-                        cv2.imwrite(new_filepath, ori_img)
-                        os.remove(filepath)
-                    else:
-                        cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
-                        cv2.imwrite(new_filepath, ori_img)
-                        self.errorpath_q.put(new_filepath)
+                    result = requests.post('http://127.0.0.1:24401/', params={'threshold': 0.1}, data=img).json()['results']
                 except Exception as e:
+                    result = list()
                     with open('D:\\error.txt', 'a+') as f:
                         f.write('{}:{}\n'.format(datetime.datetime.now(), e))
-            # 无结果，无法识别出驾驶室
+                print('耗时：{}'.format(datetime.datetime.now() - now))
+                # 有结果，能识别出来
+                if result:
+                    try:
+                        # 轮廓识别标签只有一个
+                        img = result[0]['mask']
+                        rle_obj = {"counts": img, "size": [height, width]}
+                        mask = mask_util.decode(rle_obj)
+                        # 比较从文件读取包络和当前mask的区别
+                        array = np.subtract(envelop_array, mask)
+                        if len(array[array == 255]) > pixel_threshold:
+                            self.flag = False
+                        else:
+                            self.flag = True
+                        # 轮廓线和图片的mask合并
+                        array_add = np.add(outline_array,mask)
+                        # TODO：需要定义一个确定的颜色
+                        random_color = np.array(
+                            [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
+
+                        idx = np.nonzero(array_add)
+                        alpha = 0.5
+                        ori_img[idx[0], idx[1], :] *= 1.0 - alpha
+                        ori_img[idx[0], idx[1], :] += alpha * random_color
+
+                        ori_img = ori_img.astype(np.uint8)
+
+
+                        self.display_q.put(new_filepath)
+                        if self.flag:
+                            cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
+                            cv2.imwrite(new_filepath, ori_img)
+                            os.remove(filepath)
+                        else:
+                            cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
+                            cv2.imwrite(new_filepath, ori_img)
+                            self.errorpath_q.put(new_filepath)
+                    except Exception as e:
+                        with open('D:\\error.txt', 'a+') as f:
+                            f.write('{}:{}\n'.format(datetime.datetime.now(), e))
+                # 无结果，无法识别出驾驶室
+                else:
+                    # TODO：是否直接采取措施关停？
+                    print('no result')
             else:
-                # TODO：是否直接采取措施关停？
-                print('no result')
+                break
 
     # 初版，函数完整作为参考
     def segmentation(self):

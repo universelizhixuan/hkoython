@@ -11,4 +11,5 @@ def gen_mainwindow(mixed_q_dict,im_seg, mask_path):
     app.exec_()
 
 if __name__ == '__main__':
-    gen_mainwindow({'normal-1':Queue(),'ptz-1':Queue(),'ptz-2':Queue()})
+    pass
+    # gen_mainwindow({'normal-1':Queue(),'ptz-1':Queue(),'ptz-2':Queue()})

@@ -65,6 +65,7 @@ class Graphics(QMainWindow,Ui_MainWindow):
     def graphicsView1_toggled(self):
         if self.actionbegin_1.isChecked():
             if self.envelope_mask_path and self.outline_mask_path:
+                self.im_seg.judge_event.set()
                 self.judge_mask_thread = Thread(target=self.im_seg.judge_mask,args=(self.envelope_mask_path,self.outline_mask_path,50))
                 self.judge_mask_thread.start()
                 self.timer1.setInterval(500)
@@ -73,6 +74,7 @@ class Graphics(QMainWindow,Ui_MainWindow):
                 QMessageBox.question(self, '提醒', '请先调用轮廓掩码',QMessageBox.Yes)
                 self.actionbegin_1.setChecked(False)
         else:
+            self.im_seg.judge_event.clear()
             self.timer1.stop()
     def graphicsView2_toggled(self):
         if self.actionbegin_2.isChecked():
@@ -115,7 +117,7 @@ class Graphics(QMainWindow,Ui_MainWindow):
         self.outline_mask_path = root_path + file_name.split('$')[0] + '$outline.txt'
 
     def clear_array(self):
-        self
+        self.im_seg.envelop_array = np.zeros(self.im_seg.resolution,dtype='uint8',order='F')
 
     def timeout1(self):
         if self.graphicsView_1_q.qsize() != 0:
