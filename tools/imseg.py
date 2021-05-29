@@ -107,6 +107,7 @@ class ImSeg():
                 self.envelop_array = self.envelop_array | mask
 
     # 生成轮廓线，工具函数
+    # TODO:梁兴杰
     def gen_outline(self,envelope_img_path,outline_array_path):
         img = cv2.imread(envelope_img_path)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
