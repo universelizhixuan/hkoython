@@ -142,63 +142,43 @@ class ImSeg():
                 new_filepath = '{}\\{}\\{}'.format(self.root_path, filepath.split('\\')[-2], filepath.split('\\')[-1])
 
                 ori_img = cv2.imread(filepath).astype(np.float32)
-                height, width = ori_img.shape[:2]
-
-                with open(filepath, 'rb') as f:
-                    img = f.read()
-
-                # TODO:实在太TM慢了，平均45秒！
-                now = datetime.datetime.now()
-                try:
-                    result = requests.post('http://127.0.0.1:24401/', params={'threshold': 0.1}, data=img).json()['results']
-                except Exception as e:
-                    result = list()
-                    with open('D:\\error.txt', 'a+') as f:
-                        f.write('{}:{}\n'.format(datetime.datetime.now(), e))
-                print('耗时：{}'.format(datetime.datetime.now() - now))
-                # 有结果，能识别出来
-                if result:
-                    try:
-                        # 轮廓识别标签只有一个
-                        img = result[0]['mask']
-                        rle_obj = {"counts": img, "size": [height, width]}
-                        mask = mask_util.decode(rle_obj)
-                        # 比较从文件读取包络和当前mask的区别
-                        array = np.subtract(envelop_array, mask)
-                        if len(array[array == 255]) > pixel_threshold:
-                            self.flag = False
-                        else:
-                            self.flag = True
-                        # 轮廓线和图片的mask合并
-                        array_add = np.add(outline_array,mask)
-                        # TODO：需要定义一个确定的颜色
-                        random_color = np.array(
-                            [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
-
-                        idx = np.nonzero(array_add)
-                        alpha = 0.5
-                        ori_img[idx[0], idx[1], :] *= 1.0 - alpha
-                        ori_img[idx[0], idx[1], :] += alpha * random_color
-
-                        ori_img = ori_img.astype(np.uint8)
-
-
-                        self.display_q.put(new_filepath)
-                        if self.flag:
-                            cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
-                            cv2.imwrite(new_filepath, ori_img)
-                            os.remove(filepath)
-                        else:
-                            cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
-                            cv2.imwrite(new_filepath, ori_img)
-                            self.errorpath_q.put(new_filepath)
-                    except Exception as e:
-                        with open('D:\\error.txt', 'a+') as f:
-                            f.write('{}:{}\n'.format(datetime.datetime.now(), e))
-                # 无结果，无法识别出驾驶室
+                mask = self.gen_mask(filepath)
+                if mask == 'error':
+                    # TODO:措施
+                    pass
+                elif mask == 'no result':
+                    # TODO:措施
+                    pass
                 else:
-                    # TODO：是否直接采取措施关停？
-                    print('no result')
+                    # 比较从文件读取包络和当前mask的区别
+                    array = np.subtract(envelop_array, mask)
+                    if len(array[array == 255]) > pixel_threshold:
+                        self.flag = False
+                    else:
+                        self.flag = True
+                    # 轮廓线和图片的mask合并
+                    array_add = np.add(outline_array,mask)
+                    # TODO：需要定义一个确定的颜色
+                    random_color = np.array(
+                        [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
+
+                    idx = np.nonzero(array_add)
+                    alpha = 0.5
+                    ori_img[idx[0], idx[1], :] *= 1.0 - alpha
+                    ori_img[idx[0], idx[1], :] += alpha * random_color
+
+                    ori_img = ori_img.astype(np.uint8)
+
+
+                    self.display_q.put(new_filepath)
+                    if self.flag:
+                        cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
+                        cv2.imwrite(new_filepath, ori_img)
+                        os.remove(filepath)
+                    else:
+                        cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
+                        cv2.imwrite(new_filepath, ori_img)
+                        self.errorpath_q.put(new_filepath)
             else:
                 break
 
