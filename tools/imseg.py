@@ -11,9 +11,10 @@ from PIL import Image
 
 # 处理图片，判断整车姿态是否有问题
 class ImSeg():
-    def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560)):
+    def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560),host = 'http://127.0.0.1:24401/'):
         self.hktool = hktool
         self.resolution = resolution
+        self.host = host
         self.root_path = root_path
         # 需要显示的图片统一处理，直接传输图片信息，只有出现错误再保存
         self.display_q = Queue()
@@ -40,7 +41,7 @@ class ImSeg():
         # TODO:实在太TM慢了，平均45秒！
         now = datetime.datetime.now()
         try:
-            result = requests.post('http://127.0.0.1:24401/', params={'threshold': 0.1}, data=img).json()['results']
+            result = requests.post(self.host, params={'threshold': 0.1}, data=img).json()['results']
         except Exception as e:
             result = list()
             with open('D:\\error.txt', 'a+') as f:
@@ -204,7 +205,7 @@ class ImSeg():
             # TODO:实在太TM慢了，平均45秒！
             now = datetime.datetime.now()
             try:
-                result = requests.post('http://127.0.0.1:24401/', params={'threshold': 0.1},data=img).json()['results']
+                result = requests.post(self.host, params={'threshold': 0.1},data=img).json()['results']
             except Exception as e:
                 result = list()
                 with open('D:\\error.txt','a+') as f:

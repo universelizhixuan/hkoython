@@ -7,10 +7,11 @@ from queue import Queue
 import datetime
 
 class ImRecognition():
-    def __init__(self,hktool:HKTools,root_path:str,ptz:bool):
+    def __init__(self,hktool:HKTools,root_path:str,ptz:bool,host = 'http://127.0.0.2:24401/'):
         self.hktool = hktool
         self.root_path = root_path
         self.ptz = ptz
+        self.host = host
         self.display_q = Queue()
         self.color_tuple = tuple()
 
@@ -31,7 +32,7 @@ class ImRecognition():
                     img = f.read()
                 now = datetime.datetime.now()
                 try:
-                    results = requests.post('http://127.0.0.2:24401/', params={'threshold': 0.8}, data=img).json()['results']
+                    results = requests.post(self.host, params={'threshold': 0.8}, data=img).json()['results']
                 except Exception as e:
                     results = list()
                     with open('D:\\error.txt','a+') as f:
@@ -78,7 +79,7 @@ class ImRecognition():
                     img = f.read()
                 now = datetime.datetime.now()
                 try:
-                    results = requests.post('http://127.0.0.2:24401/', params={'threshold': 0.8}, data=img).json()[
+                    results = requests.post(self.host, params={'threshold': 0.8}, data=img).json()[
                         'results']
                 except Exception as e:
                     results = list()
