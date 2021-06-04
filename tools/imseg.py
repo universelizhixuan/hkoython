@@ -109,19 +109,37 @@ class ImSeg():
 
     # 生成轮廓线，工具函数
     # TODO:梁兴杰
-    def gen_outline(self,envelope_img_path,outline_array_path):
-        img = cv2.imread(envelope_img_path)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray, (7, 7), 1, 1)  # 核尺寸通过对图像的调节自行定义
-        ret, thresh1 = cv2.threshold(blur, 127, 255, cv2.THRESH_BINARY)  # 二进制阈值化
-        x = cv2.Scharr(thresh1, cv2.CV_32F, 1, 0)  # X方向
-        y = cv2.Scharr(thresh1, cv2.CV_32F, 0, 1)  # Y方向
-        absX = cv2.convertScaleAbs(x)
-        absY = cv2.convertScaleAbs(y)
-        scharr = cv2.addWeighted(absX, 0.5, absY, 0.5, 0)
-        scharr = np.asarray(scharr, dtype='uint8', order='F')
-        scharr[scharr != 0] = 1
-        outline_mask = mask_util.encode(scharr)['counts'].decode('utf-8')
+    def gen_outline(self,envelope_mask_path,outline_array_path,n= 2):
+        envelope_array = self.txt2array(envelope_mask_path)
+        envelope_list = []
+        h, w = envelope_array.shape
+        new_envelope_array = np.zeros((h, w), dtype='uint8', order='F')
+        Flag = False
+        # 找第一个轮廓上的点，考虑的是第一行，最后一行，第一列，最后一列不存在1的情况
+        for i in range(1, h - 1):
+            for j in range(1, w - 1):
+                if envelope_array[i][j] == 1:
+                    envelope_list.append((i, j))
+                    # print(i,j)
+                    # print('-------')
+                    Flag = True
+                    break
+            if Flag:
+                break
+        for x,y in envelope_list:
+            for a in range(-1, 2):
+                for b in range(-1, 2):
+                    # print('a,b',a,b)
+                    if envelope_array[x + a][y + b] == 1 and (x + a, y + b) not in envelope_list:
+                        if envelope_array[x + a + 1][y + b] + envelope_array[x + a - 1][y + b] + envelope_array[x + a][y + b + 1] + envelope_array[x + a][y + b - 1] < 4:
+                            envelope_list.append((x + a, y + b))
+        # 修改轮廓数组，并加粗线条
+        for x, y in envelope_list:
+            for a in range(-n, n + 1):
+                for b in range(-n, n + 1):
+                    new_envelope_array[x + a][y + b] = 1
+        new_envelope_array = new_envelope_array & envelope_array
+        outline_mask = mask_util.encode(new_envelope_array)['counts'].decode('utf-8')
         with open(outline_array_path, 'w') as f:
             f.write(outline_mask)
 

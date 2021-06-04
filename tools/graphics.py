@@ -102,11 +102,9 @@ class Graphics(QMainWindow,Ui_MainWindow):
         root_path = os.path.dirname(file_path[0])
         file_name = file_path[0].split('/')[-1]
         envelope_mask_path = root_path + file_name.split('.')[0] + '$envelope.txt'
-        envelope_img_path = root_path + file_name.split('.')[0] + '_envelope.jpg'
         outline_mask_path = root_path + file_name.split('.')[0] + '$outline.txt'
         self.im_seg.arr2txt(self.im_seg.envelop_array,envelope_mask_path)
-        self.im_seg.array2img(self.im_seg.envelop_array,envelope_img_path)
-        self.im_seg.gen_outline(envelope_img_path,outline_mask_path)
+        self.im_seg.gen_outline(envelope_mask_path,outline_mask_path)
 
 
     def call_array(self):
