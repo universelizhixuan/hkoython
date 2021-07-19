@@ -11,7 +11,7 @@ from PIL import Image
 
 # 处理图片，判断整车姿态是否有问题
 class ImSeg():
-    def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560),host = 'http://127.0.0.1:24401/'):
+    def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560),host = 'http://127.0.0.1:24402/'):
         self.hktool = hktool
         self.resolution = resolution
         self.host = host
@@ -71,6 +71,7 @@ class ImSeg():
     # txt到array转换，工具函数。path：txt存储路径
     def txt2array(self,path):
         with open(path,'r') as f:
+            print(path)
             img = f.read()
         rle_obj = {"counts": img, "size": list(self.resolution)}
         return mask_util.decode(rle_obj)
@@ -92,15 +93,18 @@ class ImSeg():
     # TODO:GUI形式需要确定，核心要求两个标志互斥，且有保存界面。在GUI类里完成mask文件存储及调用
     def gen_envelope(self):
         while True:
+            print(1)
             self.envelope_event.wait()
+            print(2)
             filepath = self.hktool.snapshot_normal_q.get()
             mask = self.gen_mask(filepath)
-            os.remove(filepath)
+            print(mask)
+            # os.remove(filepath)
 
-            if mask == 'error':
+            if mask is 'error':
                 # TODO:处理
                 pass
-            elif mask == 'no result':
+            elif mask is 'no result':
                 # TODO:处理
                 pass
             # 生成包络
@@ -162,10 +166,10 @@ class ImSeg():
 
                 ori_img = cv2.imread(filepath).astype(np.float32)
                 mask = self.gen_mask(filepath)
-                if mask == 'error':
+                if mask is 'error':
                     # TODO:措施
                     pass
-                elif mask == 'no result':
+                elif mask is 'no result':
                     # TODO:措施
                     pass
                 else:
@@ -187,17 +191,19 @@ class ImSeg():
                     ori_img[idx[0], idx[1], :] += alpha * random_color
 
                     ori_img = ori_img.astype(np.uint8)
-
-
-                    self.display_q.put(new_filepath)
                     if self.flag:
-                        cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
+                        # cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
                         cv2.imwrite(new_filepath, ori_img)
-                        os.remove(filepath)
+                        print('OK')
+                        # os.remove(filepath)
                     else:
-                        cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
+                        # cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
                         cv2.imwrite(new_filepath, ori_img)
                         self.errorpath_q.put(new_filepath)
+                        print('NG')
+                    print(new_filepath)
+                    self.display_q.put(new_filepath)
+
             else:
                 break
 
@@ -236,7 +242,6 @@ class ImSeg():
     #                 img = result[0]['mask']
     #                 rle_obj = {"counts": img, "size": [height, width]}
     #                 mask = mask_util.decode(rle_obj)
-          
     #                 new_rle_obj = mask_util.encode(mask)
     #                 random_color = np.array([np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
     #

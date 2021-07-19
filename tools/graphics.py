@@ -91,18 +91,21 @@ class Graphics(QMainWindow,Ui_MainWindow):
 
     def envelope_sign(self):
         if self.actionbegin_3.isChecked():
-            self.im_seg.envelope_event.set()
-            self.actionbegin_1.setChecked(False)
-        else:
             self.im_seg.envelope_event.clear()
+            self.actionbegin_1.setChecked(False)
+            print(self.im_seg.envelope_event.is_set())
+        else:
+            self.im_seg.envelope_event.set()
+            print(self.im_seg.envelope_event.is_set())
 
     def save_array(self):
         # ==>('D:/1111.txt', 'Txt files(*.txt)')
         file_path = QFileDialog.getSaveFileName(self, "保存mask", self.mask_path, "Txt files(*.txt)")
         root_path = os.path.dirname(file_path[0])
         file_name = file_path[0].split('/')[-1]
-        envelope_mask_path = root_path + file_name.split('.')[0] + '$envelope.txt'
-        outline_mask_path = root_path + file_name.split('.')[0] + '$outline.txt'
+        envelope_mask_path = root_path + '/' + file_name.split('.')[0] + '$envelope.txt'
+        outline_mask_path = root_path + '/' + file_name.split('.')[0] + '$outline.txt'
+        print(envelope_mask_path,outline_mask_path)
         self.im_seg.arr2txt(self.im_seg.envelop_array,envelope_mask_path)
         self.im_seg.gen_outline(envelope_mask_path,outline_mask_path)
 
@@ -111,8 +114,9 @@ class Graphics(QMainWindow,Ui_MainWindow):
         file_path = QFileDialog.getOpenFileName(self, '调用mask', self.mask_path, "Txt files(*.txt)")
         root_path = os.path.dirname(file_path[0])
         file_name = file_path[0].split('/')[-1]
-        self.envelope_mask_path = root_path + file_name.split('$')[0] + '$envelope.txt'
-        self.outline_mask_path = root_path + file_name.split('$')[0] + '$outline.txt'
+        self.envelope_mask_path = root_path + '/' + file_name.split('$')[0] + '$envelope.txt'
+        self.outline_mask_path = root_path + '/' + file_name.split('$')[0] + '$outline.txt'
+        print(self.envelope_mask_path,self.outline_mask_path)
 
     def clear_array(self):
         self.im_seg.envelop_array = np.zeros(self.im_seg.resolution,dtype='uint8',order='F')
