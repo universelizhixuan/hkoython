@@ -113,7 +113,7 @@ class ImSeg():
 
     # 生成轮廓线，工具函数
     # TODO:梁兴杰
-    def gen_outline(self,envelope_mask_path,outline_array_path,n= 2):
+    def gen_outline(self,envelope_mask_path,outline_array_path,n= 20):
         envelope_array = self.txt2array(envelope_mask_path)
         envelope_list = []
         h, w = envelope_array.shape
@@ -152,7 +152,12 @@ class ImSeg():
     def judge_mask(self,envelop_array_path,outline_array_path,pixel_threshold):
         envelop_array = self.txt2array(envelop_array_path)
         outline_array = self.txt2array(outline_array_path)
-
+        '''驾驶室的运动包络和驾驶室某时刻的轮廓颜色不同，两者需分别定义颜色，颜色是按照BGR模式定义。如果不是BGR模式，需要修改数值。
+            驾驶室正常姿态运动边界颜色为绿色。某时刻驾驶室姿态正常，运动的轮廓是蓝色；当某时刻驾驶室轮廓出界时，该时刻驾驶室轮廓为红色。'''
+        # 定义驾驶室正常姿态运动包络的轮廓
+        idx_normal = np.nonzero(outline_array)
+        # 驾驶室正常姿态的轮廓是蓝色
+        outline_normal_color = [255, 0, 0]
         while True:
             if self.judge_event.isSet():
                 filepath = self.hktool.snapshot_normal_q.get()
@@ -166,6 +171,7 @@ class ImSeg():
 
                 ori_img = cv2.imread(filepath).astype(np.float32)
                 mask = self.gen_mask(filepath)
+                idx = np.nonzero(mask)
                 if mask is 'error':
                     # TODO:措施
                     pass
@@ -179,30 +185,53 @@ class ImSeg():
                         self.flag = False
                     else:
                         self.flag = True
-                    # 轮廓线和图片的mask合并
-                    array_add = np.add(outline_array,mask)
-                    # TODO：需要定义一个确定的颜色
-                    random_color = np.array(
-                        [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
-
-                    idx = np.nonzero(array_add)
+                    # # 轮廓线和图片的mask合并
+                    # array_add = np.add(outline_array,mask)
+                    # # TODO：需要定义一个确定的颜色
+                    # random_color = np.array(
+                    #     [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
+                    #
+                    # idx = np.nonzero(array_add)
+                    # alpha = 0.5
+                    # ori_img[idx[0], idx[1], :] *= 1.0 - alpha
+                    # ori_img[idx[0], idx[1], :] += alpha * random_color
+                    #
+                    # ori_img = ori_img.astype(np.uint8)
+                    # if self.flag:
+                    #     # cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
+                    #     cv2.imwrite(new_filepath, ori_img)
+                    #     print('OK')
+                    #     # os.remove(filepath)
+                    # else:
+                    #     # cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
+                    #     cv2.imwrite(new_filepath, ori_img)
+                    #     self.errorpath_q.put(new_filepath)
+                    #     print('NG')
+                    # print(new_filepath)
+                    # self.display_q.put(new_filepath)
                     alpha = 0.5
-                    ori_img[idx[0], idx[1], :] *= 1.0 - alpha
-                    ori_img[idx[0], idx[1], :] += alpha * random_color
-
-                    ori_img = ori_img.astype(np.uint8)
                     if self.flag:
-                        # cv2.putText(ori_img, "OK",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
+                        # BGR模式下是绿色，其他颜色模式需调整
+                        outline_color = [0, 255, 0]
+                        ori_img[idx[0], idx[1], :] *= alpha
+                        ori_img[idx[0], idx[1], :] += (1 - alpha) * outline_color
+                        ori_img[idx_normal[0], idx_normal[1], :] = outline_normal_color
+                        ori_img = ori_img.astype(np.uint8)
+
+                        cv2.putText(ori_img, "OK", (5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
                         cv2.imwrite(new_filepath, ori_img)
-                        print('OK')
-                        # os.remove(filepath)
+                        self.display_q.put(new_filepath)
                     else:
-                        # cv2.putText(ori_img, "NG",(5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
+                        # BGR模式下是红色，其他颜色模式需调整
+                        outline_color = [0, 0, 255]
+                        ori_img[idx[0], idx[1], :] *= alpha
+                        ori_img[idx[0], idx[1], :] += (1 - alpha) * outline_color
+                        ori_img[idx_normal[0], idx_normal[1], :] = outline_normal_color
+                        ori_img = ori_img.astype(np.uint8)
+                        cv2.putText(ori_img, "NG", (5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
                         cv2.imwrite(new_filepath, ori_img)
+                        self.display_q.put(new_filepath)
                         self.errorpath_q.put(new_filepath)
-                        print('NG')
-                    print(new_filepath)
-                    self.display_q.put(new_filepath)
 
             else:
                 break
