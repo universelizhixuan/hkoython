@@ -7,7 +7,7 @@ from queue import Queue
 import datetime
 
 class ImRecognition():
-    def __init__(self,hktool:HKTools,root_path:str,ptz:bool,host = 'http://127.0.0.2:24401/'):
+    def __init__(self,hktool:HKTools,root_path:str,ptz:bool,host = 'http://127.0.0.1:24402/'):
         self.hktool = hktool
         self.root_path = root_path
         self.ptz = ptz

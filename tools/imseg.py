@@ -11,7 +11,7 @@ from PIL import Image
 
 # 处理图片，判断整车姿态是否有问题
 class ImSeg():
-    def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560),host = 'http://127.0.0.1:24402/'):
+    def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560),host = 'http://127.0.0.1:24401/'):
         self.hktool = hktool
         self.resolution = resolution
         self.host = host
