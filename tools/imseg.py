@@ -179,6 +179,8 @@ class ImSeg():
                     # TODO:措施
                     pass
                 else:
+                    print('envelop_array:{}'.format(envelop_array))
+                    print('mask:{}'.format(mask))
                     # 比较从文件读取包络和当前mask的区别
                     array = np.subtract(envelop_array, mask)
                     if len(array[array == 255]) > pixel_threshold:
@@ -212,23 +214,23 @@ class ImSeg():
                     alpha = 0.5
                     if self.flag:
                         # BGR模式下是绿色，其他颜色模式需调整
-                        outline_color = [0, 255, 0]
+                        outline_color = np.array([0, 255, 0])
                         ori_img[idx[0], idx[1], :] *= alpha
                         ori_img[idx[0], idx[1], :] += (1 - alpha) * outline_color
                         ori_img[idx_normal[0], idx_normal[1], :] = outline_normal_color
                         ori_img = ori_img.astype(np.uint8)
 
-                        cv2.putText(ori_img, "OK", (5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
+                        cv2.putText(ori_img, "OK", (100, 200), cv2.FONT_HERSHEY_PLAIN, 14, (0, 255, 0), 3)
                         cv2.imwrite(new_filepath, ori_img)
                         self.display_q.put(new_filepath)
                     else:
                         # BGR模式下是红色，其他颜色模式需调整
-                        outline_color = [0, 0, 255]
+                        outline_color = np.array([0, 0, 255])
                         ori_img[idx[0], idx[1], :] *= alpha
                         ori_img[idx[0], idx[1], :] += (1 - alpha) * outline_color
                         ori_img[idx_normal[0], idx_normal[1], :] = outline_normal_color
                         ori_img = ori_img.astype(np.uint8)
-                        cv2.putText(ori_img, "NG", (5, 5), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
+                        cv2.putText(ori_img, "NG", (100, 200), cv2.FONT_HERSHEY_PLAIN, 14, (0, 0, 255), 3)
                         cv2.imwrite(new_filepath, ori_img)
                         self.display_q.put(new_filepath)
                         self.errorpath_q.put(new_filepath)

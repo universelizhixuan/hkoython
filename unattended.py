@@ -25,9 +25,9 @@ t2 = Thread(target=hktool_normal_1.genlist)
 t3 = Thread(target=hktool_normal_1.gendict)
 t4 = Thread(target=hktool_normal_1.snapshot_normal, args = ('D:\\MTS\\normal-1',True,2.5,))
 # PTZ摄像头1#截屏
-t5 = Thread(target=hktool_ptz_1.snapshot_ptz, args=((4, 0), (1, 31), 'D:\\MTS\\ptz-1',))
+t5 = Thread(target=hktool_ptz_1.snapshot_ptz, args=((5, 0), (1, 27), 'D:\\MTS\\ptz-1',))
 # PTZ摄像头2#截屏
-t6 = Thread(target=hktool_ptz_2.snapshot_ptz, args=((4, 0), (1, 31), 'D:\\MTS\\ptz-2',))
+t6 = Thread(target=hktool_ptz_2.snapshot_ptz, args=((5, 0), (1, 27), 'D:\\MTS\\ptz-2',))
 
 # 识别驾驶室姿态
 t7 = Thread(target=im_seg.gen_envelope)

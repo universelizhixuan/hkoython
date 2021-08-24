@@ -1,10 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+
 block_cipher = None
 
 
-a = Analysis(['D:\\python\\Project\\hkoython\\unattended.py'],
-             pathex=['D:\\python\\Project\\hkoython'],
+a = Analysis(['D:\\hkoython\\unattended.py'],
+             pathex=['D:\\hkoython'],
              binaries=[],
              datas=[],
              hiddenimports=[],
