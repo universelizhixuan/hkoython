@@ -9,9 +9,11 @@ import datetime
 from threading import Event
 from PIL import Image
 
+
 # 处理图片，判断整车姿态是否有问题
-class ImSeg():
-    def __init__(self,hktool:HKTools,root_path:str,resolution:tuple=(1440,2560),host = 'http://127.0.0.1:24401/'):
+class ImSeg:
+    def __init__(self, hktool: HKTools, root_path: str, resolution: tuple = (1440, 2560),
+                 host='http://127.0.0.1:24401/'):
         self.hktool = hktool
         self.resolution = resolution
         self.host = host
@@ -21,7 +23,7 @@ class ImSeg():
         # 错误图片路径存储
         self.errorpath_q = Queue()
         # 包络数组
-        self.envelop_array = np.zeros(self.resolution,dtype='uint8',order='F')
+        self.envelop_array = np.zeros(self.resolution, dtype='uint8', order='F')
         # 是否开始采集轮廓
         self.envelope_event = Event()
         # 是否判断
@@ -29,16 +31,15 @@ class ImSeg():
         # 是否在包络内
         self.flag = True
 
-
-    #完成图像分割，生成mask
-    def gen_mask(self,filepath):
+    # 完成图像分割，生成mask
+    def gen_mask(self, filepath):
         ori_img = cv2.imread(filepath).astype(np.float32)
         height, width = ori_img.shape[:2]
 
         with open(filepath, 'rb') as f:
             img = f.read()
 
-        # TODO:实在太TM慢了，平均45秒！
+        # 效率改善
         now = datetime.datetime.now()
         try:
             result = requests.post(self.host, params={'threshold': 0.1}, data=img).json()['results']
@@ -64,20 +65,20 @@ class ImSeg():
             return 'no result'
 
     # array到txt，工具函数。array：mask数组，path：txt存储路径
-    def arr2txt(self,array,path):
+    def arr2txt(self, array, path):
         with open(path, 'w') as f:
             f.write(mask_util.encode(array)['counts'].decode('utf-8'))
 
     # txt到array转换，工具函数。path：txt存储路径
-    def txt2array(self,path):
-        with open(path,'r') as f:
+    def txt2array(self, path):
+        with open(path, 'r') as f:
             print(path)
             img = f.read()
         rle_obj = {"counts": img, "size": list(self.resolution)}
         return mask_util.decode(rle_obj)
 
     # array到图片转换，工具函数。path：img存储路径
-    def array2img(self,array,path):
+    def array2img(self, array, path):
         im = Image.new('RGB', (self.resolution[1], self.resolution[0]), 'white')
         im.save('D:\\white.jpg')
         ori_img = cv2.imread('D:\\white.jpg').astype(np.float32)
@@ -90,7 +91,6 @@ class ImSeg():
         cv2.imwrite(path, ori_img)
 
     # 生成轮廓函数。self.envelope_event由GUI传入，如isSet为True，开始采集并计算包络；如isSet为False，结束采集包络。默认为False
-    # TODO:GUI形式需要确定，核心要求两个标志互斥，且有保存界面。在GUI类里完成mask文件存储及调用
     def gen_envelope(self):
         while True:
             print(1)
@@ -112,13 +112,12 @@ class ImSeg():
                 self.envelop_array = self.envelop_array | mask
 
     # 生成轮廓线，工具函数
-    # TODO:梁兴杰
-    def gen_outline(self,envelope_mask_path,outline_array_path,n= 20):
+    def gen_outline(self, envelope_mask_path, outline_array_path, n=20):
         envelope_array = self.txt2array(envelope_mask_path)
         envelope_list = []
         h, w = envelope_array.shape
         new_envelope_array = np.zeros((h, w), dtype='uint8', order='F')
-        Flag = False
+        flag = False
         # 找第一个轮廓上的点，考虑的是第一行，最后一行，第一列，最后一列不存在1的情况
         for i in range(1, h - 1):
             for j in range(1, w - 1):
@@ -126,16 +125,17 @@ class ImSeg():
                     envelope_list.append((i, j))
                     # print(i,j)
                     # print('-------')
-                    Flag = True
+                    flag = True
                     break
-            if Flag:
+            if flag:
                 break
-        for x,y in envelope_list:
+        for x, y in envelope_list:
             for a in range(-1, 2):
                 for b in range(-1, 2):
                     # print('a,b',a,b)
                     if envelope_array[x + a][y + b] == 1 and (x + a, y + b) not in envelope_list:
-                        if envelope_array[x + a + 1][y + b] + envelope_array[x + a - 1][y + b] + envelope_array[x + a][y + b + 1] + envelope_array[x + a][y + b - 1] < 4:
+                        if envelope_array[x + a + 1][y + b] + envelope_array[x + a - 1][y + b] + envelope_array[x + a][
+                            y + b + 1] + envelope_array[x + a][y + b - 1] < 4:
                             envelope_list.append((x + a, y + b))
         # 修改轮廓数组，并加粗线条
         for x, y in envelope_list:
@@ -149,7 +149,7 @@ class ImSeg():
 
     # 功能：(1)队列取图片生成mask；(2)判断mask是否在包络内；(3)将判断结果生成当前mask+包络线的图片，直接放入display_q，作为显示用；(4)对于判断NG的，存储并将文件路径放入errorpath_q
     # filepath:envelop_array存储的txt文件,pixel_threshold为允许的像素差阈值
-    def judge_mask(self,envelop_array_path,outline_array_path,pixel_threshold):
+    def judge_mask(self, envelop_array_path, outline_array_path, pixel_threshold):
         envelop_array = self.txt2array(envelop_array_path)
         outline_array = self.txt2array(outline_array_path)
         '''驾驶室的运动包络和驾驶室某时刻的轮廓颜色不同，两者需分别定义颜色，颜色是按照BGR模式定义。如果不是BGR模式，需要修改数值。
@@ -189,7 +189,7 @@ class ImSeg():
                         self.flag = True
                     # # 轮廓线和图片的mask合并
                     # array_add = np.add(outline_array,mask)
-                    # # TODO：需要定义一个确定的颜色
+                    # # 需要定义一个确定的颜色
                     # random_color = np.array(
                     #     [np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
                     #
@@ -257,7 +257,7 @@ class ImSeg():
     #         with open(filepath,'rb') as f:
     #             img = f.read()
     #
-    #         # TODO:实在太TM慢了，平均45秒！
+    #         # 效率提升
     #         now = datetime.datetime.now()
     #         try:
     #             result = requests.post(self.host, params={'threshold': 0.1},data=img).json()['results']
@@ -274,7 +274,8 @@ class ImSeg():
     #                 rle_obj = {"counts": img, "size": [height, width]}
     #                 mask = mask_util.decode(rle_obj)
     #                 new_rle_obj = mask_util.encode(mask)
-    #                 random_color = np.array([np.random.random() * 255.0, np.random.random() * 255.0, np.random.random() * 255.0])
+    #                 random_color = np.array([np.random.random() * 255.0, np.random.random() * 255.0,
+    #                 np.random.random() * 255.0])
     #
     #                 idx = np.nonzero(mask)
     #                 alpha = 0.5

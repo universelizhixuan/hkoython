@@ -6,8 +6,9 @@ import numpy as np
 from queue import Queue
 import datetime
 
-class ImRecognition():
-    def __init__(self,hktool:HKTools,root_path:str,ptz:bool,host = 'http://127.0.0.1:24402/'):
+
+class ImRecognition:
+    def __init__(self, hktool: HKTools, root_path: str, ptz: bool, host='http://127.0.0.1:24402/'):
         self.hktool = hktool
         self.root_path = root_path
         self.ptz = ptz
@@ -35,8 +36,8 @@ class ImRecognition():
                     results = requests.post(self.host, params={'threshold': 0.8}, data=img).json()['results']
                 except Exception as e:
                     results = list()
-                    with open('D:\\error.txt','a+') as f:
-                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
+                    with open('D:\\error.txt', 'a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(), e))
                 print('耗时：{}'.format(datetime.datetime.now() - now))
                 try:
                     if results:
@@ -54,15 +55,16 @@ class ImRecognition():
                                 self.color_tuple = (0, 0, 255)
                             if float(item["score"]) > 0.8:
                                 cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
-                                cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
+                                cv2.putText(ori_img,
+                                            "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
                                             (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
                         ori_img = ori_img.astype(np.uint8)
 
                     cv2.imwrite(new_filepath, ori_img)
                     self.display_q.put(new_filepath)
                 except Exception as e:
-                    with open('D:\\error.txt','a+') as f:
-                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
+                    with open('D:\\error.txt', 'a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(), e))
         else:
             while True:
                 filepath = self.hktool.snapshot_normal_q.get()
@@ -83,8 +85,8 @@ class ImRecognition():
                         'results']
                 except Exception as e:
                     results = list()
-                    with open('D:\\error.txt','a+') as f:
-                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
+                    with open('D:\\error.txt', 'a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(), e))
                 print('耗时：{}'.format(datetime.datetime.now() - now))
                 try:
                     if results:
@@ -100,14 +102,15 @@ class ImRecognition():
                                 self.color_tuple = (0, 255, 0)
                             else:
                                 self.color_tuple = (0, 0, 255)
-                            if float(item["score"])>0.8:
+                            if float(item["score"]) > 0.8:
                                 cv2.rectangle(ori_img, (x1, y1), (x2, y2), self.color_tuple, 2)
-                                cv2.putText(ori_img, "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
+                                cv2.putText(ori_img,
+                                            "{} score: {}".format(item["name"], round(float(item["score"]), 4)),
                                             (x1, y1 - 10), cv2.FONT_HERSHEY_PLAIN, 0.7, (255, 255, 255), 1)
                         ori_img = ori_img.astype(np.uint8)
 
                     cv2.imwrite(new_filepath, ori_img)
                     self.display_q.put(new_filepath)
                 except Exception as e:
-                    with open('D:\\error.txt','a+') as f:
-                        f.write('{}:{}\n'.format(datetime.datetime.now(),e))
+                    with open('D:\\error.txt', 'a+') as f:
+                        f.write('{}:{}\n'.format(datetime.datetime.now(), e))

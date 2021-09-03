@@ -4,14 +4,14 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import QTimer
 import cv2
 from .ui_mainwindow import Ui_MainWindow
-from queue import Queue
 from threading import Thread
 from tools.imseg import ImSeg
 import os
 import numpy as np
 
-class Graphics(QMainWindow,Ui_MainWindow):
-    def __init__(self,mixed_q_dict:dict, im_seg:ImSeg, mask_path:str, parent=None):
+
+class Graphics(QMainWindow, Ui_MainWindow):
+    def __init__(self, mixed_q_dict: dict, im_seg: ImSeg, mask_path: str, parent=None):
         super(Graphics, self).__init__(parent)
         self.setupUi(self)
         # 保存mask的根目录
@@ -55,33 +55,34 @@ class Graphics(QMainWindow,Ui_MainWindow):
         # judge_mask函数的线程
         self.judge_mask_thread = None
 
-
-    def gen_graphics_q(self,mixed_q_dict):
+    def gen_graphics_q(self, mixed_q_dict):
         self.graphicsView_1_q = mixed_q_dict['normal-1']
         self.graphicsView_2_q = mixed_q_dict['ptz-1']
         self.graphicsView_3_q = mixed_q_dict['ptz-2']
-
 
     def graphicsView1_toggled(self):
         if self.actionbegin_1.isChecked():
             if self.envelope_mask_path and self.outline_mask_path:
                 self.im_seg.judge_event.set()
-                self.judge_mask_thread = Thread(target=self.im_seg.judge_mask,args=(self.envelope_mask_path,self.outline_mask_path,50))
+                self.judge_mask_thread = Thread(target=self.im_seg.judge_mask,
+                                                args=(self.envelope_mask_path, self.outline_mask_path, 50))
                 self.judge_mask_thread.start()
                 self.timer1.setInterval(500)
                 self.timer1.start()
             else:
-                QMessageBox.question(self, '提醒', '请先调用轮廓掩码',QMessageBox.Yes)
+                QMessageBox.question(self, '提醒', '请先调用轮廓掩码', QMessageBox.Yes)
                 self.actionbegin_1.setChecked(False)
         else:
             self.im_seg.judge_event.clear()
             self.timer1.stop()
+
     def graphicsView2_toggled(self):
         if self.actionbegin_2.isChecked():
             self.timer2.setInterval(500)
             self.timer2.start()
         else:
             self.timer2.stop()
+
     def graphicsView3_toggled(self):
         if self.actionbegin_3.isChecked():
             self.timer3.setInterval(500)
@@ -105,10 +106,9 @@ class Graphics(QMainWindow,Ui_MainWindow):
         file_name = file_path[0].split('/')[-1]
         envelope_mask_path = root_path + '/' + file_name.split('.')[0] + '$envelope.txt'
         outline_mask_path = root_path + '/' + file_name.split('.')[0] + '$outline.txt'
-        print(envelope_mask_path,outline_mask_path)
-        self.im_seg.arr2txt(self.im_seg.envelop_array,envelope_mask_path)
-        self.im_seg.gen_outline(envelope_mask_path,outline_mask_path)
-
+        print(envelope_mask_path, outline_mask_path)
+        self.im_seg.arr2txt(self.im_seg.envelop_array, envelope_mask_path)
+        self.im_seg.gen_outline(envelope_mask_path, outline_mask_path)
 
     def call_array(self):
         file_path = QFileDialog.getOpenFileName(self, '调用mask', self.mask_path, "Txt files(*.txt)")
@@ -116,10 +116,10 @@ class Graphics(QMainWindow,Ui_MainWindow):
         file_name = file_path[0].split('/')[-1]
         self.envelope_mask_path = root_path + '/' + file_name.split('$')[0] + '$envelope.txt'
         self.outline_mask_path = root_path + '/' + file_name.split('$')[0] + '$outline.txt'
-        print(self.envelope_mask_path,self.outline_mask_path)
+        print(self.envelope_mask_path, self.outline_mask_path)
 
     def clear_array(self):
-        self.im_seg.envelop_array = np.zeros(self.im_seg.resolution,dtype='uint8',order='F')
+        self.im_seg.envelop_array = np.zeros(self.im_seg.resolution, dtype='uint8', order='F')
 
     def timeout1(self):
         if self.graphicsView_1_q.qsize() != 0:
@@ -138,6 +138,7 @@ class Graphics(QMainWindow,Ui_MainWindow):
             scene.addItem(item)
             self.graphicsView_1.setScene(scene)  # 将场景添加至视图
             self.graphicsView_1.viewport().update()
+
     def timeout2(self):
         if self.graphicsView_2_q.qsize() != 0:
             path = self.graphicsView_2_q.get()
@@ -155,6 +156,7 @@ class Graphics(QMainWindow,Ui_MainWindow):
             scene.addItem(item)
             self.graphicsView_2.setScene(scene)  # 将场景添加至视图
             self.graphicsView_2.viewport().update()
+
     def timeout3(self):
         if self.graphicsView_3_q.qsize() != 0:
             path = self.graphicsView_3_q.get()

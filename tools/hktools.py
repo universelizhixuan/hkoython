@@ -7,7 +7,6 @@ import time
 import datetime
 from queue import Queue
 import os
-from threading import Thread
 from threading import Event
 
 alarmq = Queue(maxsize=0)
@@ -16,31 +15,29 @@ event_move = Event()
 flag = True
 
 
-class HKTools():
-    def __init__(self,url,username,password,port=8000,dll_path = r'D:\CH-HCNetSDKV6.1.6.4_build20201231_win64\dll'):
+class HKTools:
+    def __init__(self, url, username, password, port=8000, dll_path=r'D:\CH-HCNetSDKV6.1.6.4_build20201231_win64\dll'):
         self.url = url
         self.username = username
         self.password = password
         self.port = port
-        self.hksdk = self.load_dll(dll_path)
+        self.dll_path = dll_path
+        self.hksdk = self.load_dll()
         self.init_hksdk(self.hksdk)
-        self.userid = self.login(self.hksdk,url,username,password,port)
+        self.userid = self.login(self.hksdk)
         self.snapshot_ptz_q = Queue(maxsize=0)
         self.snapshot_normal_q = Queue(maxsize=0)
         self.alarm_set = set()
         self.handle = -1
         self.event_deploy = Event()
 
-
-    def load_dll(self,dll_path):
+    def load_dll(self):
         # windll和cdll区别：windll导入的库按stdcall调用协议调用其中的函数，cdll载入按标准的cdecl调用协议导出的函数
         # 载入HCCore.dll
-        # todo:确认此行是否需要
-        hccode = WinDLL(dll_path + "\\HCCore.dll")
-        hcnetsdk = cdll.LoadLibrary(dll_path + "\\HCNetSDK.dll")
+        hcnetsdk = cdll.LoadLibrary(self.dll_path + "\\HCNetSDK.dll")
         return hcnetsdk
 
-    def init_hksdk(self,hksdk):
+    def init_hksdk(self, hksdk):
         if not hksdk.NET_DVR_Init():
             print("初始失败")
             return False
@@ -50,17 +47,17 @@ class HKTools():
         print("初始化成功")
 
     # 登陆函数，实例构造的时候自动调用
-    def login(self,hksdk,url,username,password,port):
+    def login(self, hksdk):
         # 通过ctypes中的bytes函数将python的str类型转化为C++的string类型(*char)
-        burl = bytes(url, "ascii")
-        busename = bytes(username, "ascii")
-        bpassword = bytes(password, "ascii")
+        burl = bytes(self.url, "ascii")
+        busename = bytes(self.username, "ascii")
+        bpassword = bytes(self.password, "ascii")
 
         login_info = NET_DVR_Login_V40.NET_DVR_USER_LOGIN_INFO()
         device_info = NET_DVR_Login_V40.NET_DVR_DEVICEINFO_V40()
 
         # 赋值login_info信息，一般device_info不用赋值
-        login_info.wPort = port
+        login_info.wPort = self.port
         login_info.bUseAsynLogin = 0
         login_info.sUserName = busename
         login_info.sPassword = bpassword
@@ -80,7 +77,7 @@ class HKTools():
         return userid
 
     # 登出函数，不自动调用
-    def uinit(self,hksdk, userid):
+    def uinit(self, hksdk, userid):
         isOK = hksdk.NET_DVR_Logout(userid)
         if isOK == -1:
             print("登出失败错误码为{}".format(hksdk.NET_DVR_GetLastError()))
@@ -91,7 +88,7 @@ class HKTools():
     # 固定摄像头的截图函数
     # 存在两种用法：(1)识别轮廓，需实时识别；(2)识别螺栓，必须等台架停止运转后识别，通过event传入信号
     # 当contour(轮廓识别)为True时，采用轮廓识别，intervaltime时间即是采集间隔时间；当为False时，直接通过event传入信号
-    def snapshot_normal(self, rootpath, contour = True, intervaltime=1):
+    def snapshot_normal(self, rootpath, contour=True, intervaltime=1):
         picpara = NET_DVR_JPEGPARA.NET_DVR_JPEGPARA()
         picpara.wPicSize = 9
         picpara.wPicQuality = 0
@@ -131,11 +128,10 @@ class HKTools():
                     else:
                         self.snapshot_normal_q.put(filepath)
 
-
     # 球机的截图函数
     # 截图函数:interval = (leadtime,posttime),preset = (firstpreset,lastpreset)
     # 通过在rootpath下创建当前日期的文件夹，存储图片。日期命名格式"年-月-日"，图片命名格式"时-分-秒_预置点.jpg"
-    def snapshot_ptz(self,intervaltime,preset,rootpath):
+    def snapshot_ptz(self, intervaltime, preset, rootpath):
         picpara = NET_DVR_JPEGPARA.NET_DVR_JPEGPARA()
         picpara.wPicSize = 9
         picpara.wPicQuality = 0
@@ -144,25 +140,28 @@ class HKTools():
                 # 刚开的时候不截图
                 time.sleep(5)
                 event_move.wait()
-                for i in range(preset[0],preset[1]):
+                for i in range(preset[0], preset[1]):
                     self.hksdk.NET_DVR_PTZPreset_Other(self.userid, 1, 39, i)
                     time.sleep(intervaltime[0])
                     nowtime = datetime.datetime.now()
-                    folder_path = '{}\\{}'.format(rootpath,nowtime.strftime('%Y-%m-%d'))
+                    folder_path = '{}\\{}'.format(rootpath, nowtime.strftime('%Y-%m-%d'))
                     if not os.path.exists(folder_path):
                         print('mkdir {}'.format(folder_path))
                         os.mkdir(folder_path)
-                    filepath = '{}\\{}_{}.jpg'.format(folder_path,nowtime.strftime('%H-%M-%S'),i)
-                    errorcode = self.hksdk.NET_DVR_CaptureJPEGPicture(self.userid, 1, byref(picpara), bytes(filepath, "ascii"))
+                    filepath = '{}\\{}_{}.jpg'.format(folder_path, nowtime.strftime('%H-%M-%S'), i)
+                    errorcode = self.hksdk.NET_DVR_CaptureJPEGPicture(self.userid, 1, byref(picpara),
+                                                                      bytes(filepath, "ascii"))
                     if not errorcode:
-                        print('截取预置点{}时失败，时间{} {}'.format(i,nowtime.strftime('%Y-%m-%d'),nowtime.strftime('%H:%M:%S')))
+                        print(
+                            '截取预置点{}时失败，时间{} {}'.format(i, nowtime.strftime('%Y-%m-%d'), nowtime.strftime('%H:%M:%S')))
                     else:
                         self.snapshot_ptz_q.put(filepath)
                     time.sleep(intervaltime[1])
 
     @staticmethod
     @CFUNCTYPE(c_int, c_long, MSesGCallback.NET_DVR_ALARMER, c_char_p, c_ulong, c_void_p)
-    def alarm_callback(lCommand: c_long, pAlarmer: MSesGCallback.NET_DVR_ALARMER, pAlarmInfo: c_char_p, dwBufLen: c_ulong, pUser: c_void_p):
+    def alarm_callback(lCommand: c_long, pAlarmer: MSesGCallback.NET_DVR_ALARMER, pAlarmInfo: c_char_p,
+                       dwBufLen: c_ulong, pUser: c_void_p):
         # print("收到警报信息，类型为 {} \t发送者为 {}".format(lCommand, pAlarmer.lUserID))
         if lCommand == 0x4000:
             # NET_DVR_ALARMINFO_V30 alarmInfo;
@@ -212,9 +211,9 @@ class HKTools():
         while True:
             timestampnow = int(alarmq.get())
             # print(timestampnow)
-            for i in range(0,14):
-                if timestampnow+i not in self.alarm_set:
-                    self.alarm_set.add(timestampnow+i)
+            for i in range(0, 14):
+                if timestampnow + i not in self.alarm_set:
+                    self.alarm_set.add(timestampnow + i)
 
     def gendict(self):
         global flag
@@ -222,7 +221,7 @@ class HKTools():
         while True:
             if nowstamp in self.alarm_set:
                 flag = True
-                print('{}:{}'.format(datetime.datetime.fromtimestamp(nowstamp).strftime("%Y-%m-%d %H:%M:%S"),1))
+                print('{}:{}'.format(datetime.datetime.fromtimestamp(nowstamp).strftime("%Y-%m-%d %H:%M:%S"), 1))
                 if event_move.isSet():
                     event_move.clear()
             else:
@@ -233,7 +232,7 @@ class HKTools():
             nowstamp += 1
             # 万一卡一下，时间变成负的会出现异常
             try:
-                time.sleep(1.1-(datetime.datetime.now().timestamp()-2-nowstamp))
+                time.sleep(1.1 - (datetime.datetime.now().timestamp() - 2 - nowstamp))
             except:
                 pass
 
